@@ -39,14 +39,16 @@ with open(PROMPT_FILE_PATH, "r") as prompt_file:
 STANDARD_DIRS = {
     "Windows": "C:/Program Files/TLA+",
     "Darwin": "/Users/Shared/TLA+",
-    "Linux": "/usr/local/share/TLA+"
+    "Linux": "/usr/local/share/TLA+",
 }
+
 
 def get_standard_dir():
     """
     Get the standard directory for TLA+ tools based on the platform
     """
     return STANDARD_DIRS.get(platform.system(), "/usr/local/share/TLA+")
+
 
 def run_tla_spec(spec_name: str, tla_tools_path: str) -> str:
     """
@@ -66,6 +68,7 @@ def run_tla_spec(spec_name: str, tla_tools_path: str) -> str:
     except subprocess.CalledProcessError as error:
         return error.output.decode("utf-8"), error.returncode
     return result.decode("utf-8"), 0
+
 
 def json_validated_response(
     model: str, messages: List[Dict], nb_retry: int = VALIDATE_JSON_RETRY
@@ -106,7 +109,7 @@ def json_validated_response(
                     "content": (
                         "Your response could not be parsed by json.loads. "
                         "Please restate your last message as pure JSON."
-                        ),
+                    ),
                 }
             )
             # dec nb_retry
@@ -121,14 +124,17 @@ def json_validated_response(
         f"No valid json response found after {VALIDATE_JSON_RETRY} tries. Exiting."
     )
 
-def send_error_to_gpt(spec_path: str, error_message: str, model: str = DEFAULT_MODEL) -> Dict:
+
+def send_error_to_gpt(
+    spec_path: str, error_message: str, model: str = DEFAULT_MODEL
+) -> Dict:
     # Read the TLA+ specification
     with open(spec_path, "r") as f:
         spec_lines = f.readlines()
 
     # Assume the .CFG file has the same name as the TLA+ specification but with a .cfg extension
     cfg_path = spec_path.rsplit(".", 1)[0] + ".cfg"
-    
+
     # Read the .CFG file
     with open(cfg_path, "r") as f:
         model_cfg = f.read()
@@ -169,7 +175,6 @@ def send_error_to_gpt(spec_path: str, error_message: str, model: str = DEFAULT_M
     ]
 
     return json_validated_response(model, messages)
-
 
 
 def apply_changes(file_path: str, changes: List, confirm: bool = False):
@@ -225,6 +230,7 @@ def apply_changes(file_path: str, changes: List, confirm: bool = False):
         f.writelines(file_lines)
     print("Changes applied.")
 
+
 def check_model_availability(model):
     available_models = [x["id"] for x in openai.Model.list()["data"]]
     if model not in available_models:
@@ -235,12 +241,19 @@ def check_model_availability(model):
         )
         exit()
 
+
 def find_tla_tools_path():
     # Run the locate command to find the TLA+ tools jar file
     try:
-        locate_output = subprocess.check_output(["locate", "tla2tools.jar"]).decode("utf-8").split("\n")
+        locate_output = (
+            subprocess.check_output(["locate", "tla2tools.jar"])
+            .decode("utf-8")
+            .split("\n")
+        )
     except subprocess.CalledProcessError:
-        print("The locate command failed. Please make sure that the locate database is up to date.")
+        print(
+            "The locate command failed. Please make sure that the locate database is up to date."
+        )
         return None
 
     # Filter out any empty lines or lines that don't end with "tla2tools.jar"
@@ -255,6 +268,7 @@ def find_tla_tools_path():
 
     return latest_jar_file
 
+
 def install_tla_plus(disable_ssl_verification=False):
     """Downloads and sets up TLA+."""
     print("TLA+ not found. Attempting to install...")
@@ -267,7 +281,7 @@ def install_tla_plus(disable_ssl_verification=False):
         # Attempt to download with SSL verification
         response = requests.get(url, verify=not disable_ssl_verification)
         response.raise_for_status()
-        with open(tla2tools_path, 'wb') as f:
+        with open(tla2tools_path, "wb") as f:
             f.write(response.content)
     except requests.exceptions.RequestException as e:
         print(f"Error occurred during download: {e}")
@@ -277,13 +291,14 @@ def install_tla_plus(disable_ssl_verification=False):
 
     return tla2tools_path
 
+
 def check_tla_tools_availability():
     """
     Checks if the TLC model checker is available in the system path and functioning correctly.
     """
 
     # The name of the TLA+ tools jar file
-    tla_tools_jar = 'tla2tools.jar'
+    tla_tools_jar = "tla2tools.jar"
 
     # Check if TLA+ tools are available in system PATH
     tla_tools_path = shutil.which(tla_tools_jar)
@@ -357,7 +372,7 @@ def check_tla_tools_availability():
 
 def provide_detailed_comments(spec_path: str, model: str = DEFAULT_MODEL):
     cfg_path = os.path.splitext(spec_path)[0] + ".cfg"
-    
+
     # Step 1: Load both the .cfg and .tla files and send them in a prompt
     cfg_file_content = ""
     if os.path.exists(cfg_path):
@@ -373,8 +388,7 @@ def provide_detailed_comments(spec_path: str, model: str = DEFAULT_MODEL):
         "".join(spec_lines) + "\n"
         "\n\n"
         "And here is its .cfg file (the model to check):\n\n"
-        "Here is the .cfg file \n"
-        + cfg_file_content + "\n"
+        "Here is the .cfg file \n" + cfg_file_content + "\n"
         "\n\n"
         "Please rewrite the TLA+ file to include detailed comments "
         "that are readable and useful for developers and people new to TLA+. "
@@ -389,10 +403,18 @@ def provide_detailed_comments(spec_path: str, model: str = DEFAULT_MODEL):
 
     # Step 3: Take the response and pull the TLA+ file and rewrite the file
     # We expect the TLA+ code to be in a code block in the response
-    response_lines = response.choices[0].message['content'].split("\n")
-    response_code_start = next(i for i, line in enumerate(response_lines) if line.startswith("```"))
-    response_code_end = next(i for i, line in enumerate(response_lines[response_code_start+1:], response_code_start+1) if line.startswith("```"))
-    response_code = response_lines[response_code_start+1 : response_code_end]
+    response_lines = response.choices[0].message["content"].split("\n")
+    response_code_start = next(
+        i for i, line in enumerate(response_lines) if line.startswith("```")
+    )
+    response_code_end = next(
+        i
+        for i, line in enumerate(
+            response_lines[response_code_start + 1 :], response_code_start + 1
+        )
+        if line.startswith("```")
+    )
+    response_code = response_lines[response_code_start + 1 : response_code_end]
     response_code = [line.replace("\\\\", "\\") for line in response_code]
 
     # Step 4: Run a sanitation check on the TLA+ file that there are not comments on the header line
@@ -400,18 +422,29 @@ def provide_detailed_comments(spec_path: str, model: str = DEFAULT_MODEL):
         response_code[0] += "\n\n"
 
     # Step 5: Make sure there are no generic or empty comments
-    response_code = [line for line in response_code if "\\*" not in line or line.split("\\*")[1].strip() not in {"", "this is a specification"}]
+    response_code = [
+        line
+        for line in response_code
+        if "\\*" not in line
+        or line.split("\\*")[1].strip() not in {"", "this is a specification"}
+    ]
 
     # Step 6: Check there are no comments in the footer
-    footer_index = next((i for i, line in enumerate(response_code) if line.startswith("====")), None)
+    footer_index = next(
+        (i for i, line in enumerate(response_code) if line.startswith("====")), None
+    )
     if footer_index is not None:
-        response_code = response_code[:footer_index] + [line for line in response_code[footer_index:] if "\\*" not in line]
+        response_code = response_code[:footer_index] + [
+            line for line in response_code[footer_index:] if "\\*" not in line
+        ]
 
     # Step 7: Write the sanitized lines back to the file
     with open(spec_path, "w") as f:
         f.write("\n".join(response_code))
 
-    print("\nDetailed comments for the specification have been added to the TLA+ file.\n")
+    print(
+        "\nDetailed comments for the specification have been added to the TLA+ file.\n"
+    )
 
 
 def main(spec_name, revert=False, model=DEFAULT_MODEL, confirm=False):
@@ -431,7 +464,9 @@ def main(spec_name, revert=False, model=DEFAULT_MODEL, confirm=False):
         output, returncode = run_tla_spec(spec_name, tla_tools_path)
 
         if returncode != 0:
-            print(f"An error occurred when checking {spec_name} with TLC. Error message:\n{output}")
+            print(
+                f"An error occurred when checking {spec_name} with TLC. Error message:\n{output}"
+            )
 
             # Make a backup of the spec file
             shutil.copy(spec_name, spec_name + ".bak")
@@ -442,7 +477,9 @@ def main(spec_name, revert=False, model=DEFAULT_MODEL, confirm=False):
             # Apply the changes
             apply_changes(spec_name, changes_suggestion, confirm)
 
-            print(f"Changes applied to {spec_name}. Please check the spec and rerun the tool if necessary.")
+            print(
+                f"Changes applied to {spec_name}. Please check the spec and rerun the tool if necessary."
+            )
 
         else:
             print(f"No errors detected in {spec_name}.")
@@ -453,19 +490,33 @@ def main(spec_name, revert=False, model=DEFAULT_MODEL, confirm=False):
             print("Running TLC again to check if the comments introduced any errors...")
             output, returncode = run_tla_spec(spec_name, tla_tools_path)
             if returncode != 0:
-                print(f"An error occurred after adding comments to {spec_name}. Error message:\n{output}")
+                print(
+                    f"An error occurred after adding comments to {spec_name}. Error message:\n{output}"
+                )
                 print("Removing comments...")
                 shutil.copy(spec_name + ".bak", spec_name)
             else:
                 print("No errors detected after adding comments. Exiting...")
             break
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("spec_name", type=str, help="The name of the TLA+ spec to check")
-    parser.add_argument("--revert", action="store_true", help="Revert the spec to its previous state")
-    parser.add_argument("--model", type=str, default=DEFAULT_MODEL, help="The name of the GPT model to use")
-    parser.add_argument("--confirm", action="store_true", help="Ask for confirmation before each change")
+    parser.add_argument(
+        "spec_name", type=str, help="The name of the TLA+ spec to check"
+    )
+    parser.add_argument(
+        "--revert", action="store_true", help="Revert the spec to its previous state"
+    )
+    parser.add_argument(
+        "--model",
+        type=str,
+        default=DEFAULT_MODEL,
+        help="The name of the GPT model to use",
+    )
+    parser.add_argument(
+        "--confirm", action="store_true", help="Ask for confirmation before each change"
+    )
 
     args = parser.parse_args()
 
