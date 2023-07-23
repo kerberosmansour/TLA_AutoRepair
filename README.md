@@ -1,4 +1,4 @@
-# TLA_AutoRepair
+# TLA+ AutoRepair
 
 TLA+ is a language for formal specification. It can be used to formally verify algorithms and mathematical theorems. Companies like AWS use it for verifying mission-critical parts of systems like S3.
 
@@ -6,7 +6,7 @@ TLA+ AutoRepair is used to repair/self-heal formal specifications with GPT-4 in 
 
 Given a TLA+ specification (.tla file) and a model to check (.cfg), the application will go through each error, send it to GPT-4 (or specified model), and fix all errors. Finally, it will document the code to make it more readable.
 
-Example Command: python3 autorepair.py tla_tests/Spec1.tla --model=gpt-4
+Example Command: python3 autorepair.py Test_Specs/Counter.tla --model=gpt-4
 
 # Rationale - Looking at Code at a Higher Level
 As Language Learning Models (LLMs) are helping improve developer productivity, it might make sense to look at code from a higher perspective. The challenge is that TLA+ and formal specifications have a steep learning curve. This tool can aid in overcoming this obstacle at the outset.
