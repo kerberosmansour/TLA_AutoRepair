@@ -2,9 +2,8 @@
 
 EXTENDS Naturals
 
-CONSTANTS Processes
+CONSTANTS Processes = {1, 2}
 ASSUME Processes = {1, 2}
-
 
 VARIABLES state
 
@@ -22,13 +21,15 @@ ProcNext(p) ==
     \/ /\ state[p] = "c"
        /\ state' = [state EXCEPT ![p] = "n"]
 
+
+Invariant == ~\E p, q \in Processes : p # q /\ state[p] = "c" /\ state[q] = "c"
+
 (* The next state action for the entire system *)
 Next == \E p \in Processes : ProcNext(p)
 
 (* The specification *)
-Spec == Init /\ [][Next]_state
+Spec == Init /\ [][Next]_state /\ Invariant
 
 (* Property to check: No two processes can be in the critical section at the same time *)
-NoTwoInCritical == ~\E p, q \in Processes : p # q /\ state[p] = "c" /\ state[q] = "c"
-
+(* Property to check: No two processes can be in the critical section at the same time *)
 =============================================================================
