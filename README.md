@@ -14,7 +14,7 @@ As Language Learning Models (LLMs) are helping improve developer productivity, i
 # Getting Started
 1. Clone the repo e.g. git clone https://github.com/kerberosmansour/TLA_AutoRepair.git
 2. Create a .env file in the folder and add your OpenAI Key.
-3. Run AutoRepair on a TLA+ Spec. Example Command: python3 autorepair.py tla_tests/Spec1.tla --model=gpt-4
+3. Run AutoRepair on a TLA+ Spec. Example Command: python3 autorepair.py Test_Specs/Counter.tla --model=gpt-4
 4. NOTE: There is a folder with TLA+ specifications that need repair.
 5. NOTE: The code, by default, will check if TLA+ is installed on your system. If not, it will attempt to install it for you in these locations:
 	* "Windows": "C:/Program Files/TLA+",
